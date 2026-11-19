@@ -1,0 +1,7 @@
+config HEXDRV
+    bool "hexdrv (ring-0 memory access)"
+    default n
+    help
+      In-tree driver: ioctl READ/WRITE arbitrary process memory via
+      access_process_vm(). Built into the kernel so it is not listed in
+      /proc/modules.

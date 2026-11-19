@@ -147,6 +147,22 @@ jobs:
           kernel_version: ${{ inputs.kernel_version }}
           os_patch_level: ${{ inputs.os_patch_level }}
 
+      - name: Inject hexdrv driver
+        shell: bash
+        run: |
+          set -euo pipefail
+          K="$GITHUB_WORKSPACE/kernel/common"
+          mkdir -p "$K/drivers/hexdrv"
+          cp "$GITHUB_WORKSPACE/hexdrv/Kconfig"   "$K/drivers/hexdrv/"
+          cp "$GITHUB_WORKSPACE/hexdrv/Makefile"  "$K/drivers/hexdrv/"
+          cp "$GITHUB_WORKSPACE/hexdrv/hexdrv.c"  "$K/drivers/hexdrv/"
+          grep -q 'drivers/hexdrv/Kconfig' "$K/drivers/Kconfig" || echo 'source "drivers/hexdrv/Kconfig"' >> "$K/drivers/Kconfig"
+          grep -q 'hexdrv/' "$K/drivers/Makefile" || echo 'obj-y += hexdrv/' >> "$K/drivers/Makefile"
+          for f in "$K/arch/arm64/configs/gki_defconfig" "$K/arch/arm64/configs/gki_defconfig.fragment"; do
+            if [ -f "$f" ]; then grep -q '^CONFIG_HEXDRV=' "$f" || echo 'CONFIG_HEXDRV=y' >> "$f"; fi
+          done
+          echo "hexdrv injected at $K/drivers/hexdrv"
+
       - name: Initialize Config Fragment
         uses: ./.github/actions/initialize-config-fragment
       - name: Spoof /proc/config.gz With Stock Config
